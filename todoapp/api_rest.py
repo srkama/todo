@@ -127,9 +127,7 @@ class TaskView(ModelViewSet):
             for tag in tags:
                 tag_obj = Tags.objects.get_or_create(name=tag,
                                                      user=self.request.user)
-                print tag_obj
                 instance.tags.add(tag_obj[0])
-                print instance.tags.all()
 
     def perform_update(self, serializer):
         """
@@ -252,29 +250,33 @@ class TaskView(ModelViewSet):
 
     @detail_route(['POST'], url_path='manage-tags')
     def manage_tags(self, request, pk, **kwargs):
-        tags = request.DATA.getlist('tags')
-        task_obj = self.get_object()
-        task_obj.tasks.clear()
-        if tags:
-            for tag in tags:
-                tag_obj = Tags.objects.get_or_create(name=tag,
-                                                     user=self.request.user)
-                print tag_obj
-                task_obj.tags.add(tag_obj[0])
-                print task_obj.tags.all()
-
+        try:
+            tags = request.DATA.getlist('tags')
+            task_obj = self.get_object()
+            task_obj.tags.clear()
+            if tags:
+                for tag in tags:
+                    tag_obj = Tags.objects.get_or_create(name=tag,
+                                                         user=self.request.user)
+                    task_obj.tags.add(tag_obj[0])
+            return Response({'detail': 'tags update'}, status=status.HTTP_202_ACCEPTED)
+        except:
+            return Response({'detail': 'Error in updating'},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @list_route(['GET'], url_path='search')
     def search(self, request):
-        term = self.request.GET.get('q','')
-        print term
+        """
+        API  for searching the tasks
+        :param request: API
+        :return: task list as paginated response.
+        """
+        term = self.request.GET.get('q', '')
         if term:
-            query_set = self.get_user_tasks()
-            query_set = query_set.filter(
-                Q(title__icontains=term)|
-                Q(description__icontains=term) |
-                Q(tags__name__icontains=term)
-            )
+            query_set = self.get_queryset()
+            query_set = query_set.extra(where = ["search_index @@ "
+                                                    "to_tsquery("
+                                                    "'%s' )" % (term)])
             return self.get_page_response(query_set, request, TaskSerializer)
         else:
             return Response({'detail':'No Results Found'},

@@ -25,7 +25,8 @@ class UserSerializer(serializers.ModelSerializer):
         :param obj: user boj
         :return: dict of url end points
         """
-        urls = {'inbox': reverse('task-list')}
+        urls = {'inbox': reverse('task-list'),
+                'search': reverse('task-search')}
         for folder in obj.folder_set.all():
             urls.update({
                 folder.name:reverse('task-list')+'?f='+str(folder.id)})
@@ -79,7 +80,6 @@ class TaskSerializer(serializers.ModelSerializer):
         :param obj: task obj
         :return: dict with url points
         """
-        print obj
         kwargs={'pk': obj.id}
         url_names = ['task-manage-note',
                      'task-move-to-folder',

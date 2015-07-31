@@ -31,10 +31,7 @@ class Task(CreatedUpdatedMixin):
     priority = models.IntegerField(choices=PRIORITIES, default=2)
     owner = models.ForeignKey(User, null=True)
 
-
 class Notes(CreatedUpdatedMixin):
     task = models.ForeignKey(Task)
     notes = models.TextField()
-
-
 
